@@ -1,0 +1,75 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* LLMmonitorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* LLMmonitorApp.swift */; };
+		A10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* ContentView.swift */; };
+		A10000000000000000000003 /* Discovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* Discovery.swift */; };
+		A10000000000000000000004 /* MachineStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* MachineStore.swift */; };
+		A10000000000000000000005 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* Models.swift */; };
+		A10000000000000000000006 /* AboutWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* AboutWindow.swift */; };
+		A10000000000000000000007 /* WindowFramePersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* WindowFramePersistence.swift */; };
+		A10000000000000000000008 /* Icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* Icon.icns */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* LLMmonitorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMmonitorApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* Discovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Discovery.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* MachineStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MachineStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* AboutWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutWindow.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* WindowFramePersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFramePersistence.swift; sourceTree = "<group>"; };
+		A20000000000000000000008 /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Icon.icns; sourceTree = "<group>"; };
+		A20000000000000000000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000010 /* LLMmonitor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LLMmonitor.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXGroup section */
+		A30000000000000000000001 = {isa = PBXGroup; children = (A30000000000000000000002 /* Sources */, A30000000000000000000003 /* App */, A30000000000000000000004 /* Products */); sourceTree = "<group>"; };
+		A30000000000000000000002 /* Sources */ = {isa = PBXGroup; children = (A20000000000000000000001 /* LLMmonitorApp.swift */, A20000000000000000000002 /* ContentView.swift */, A20000000000000000000003 /* Discovery.swift */, A20000000000000000000004 /* MachineStore.swift */, A20000000000000000000005 /* Models.swift */, A20000000000000000000006 /* AboutWindow.swift */, A20000000000000000000007 /* WindowFramePersistence.swift */); path = Sources/LLMmonitor; sourceTree = SOURCE_ROOT; };
+		A30000000000000000000003 /* App */ = {isa = PBXGroup; children = (A20000000000000000000008 /* Icon.icns */, A20000000000000000000009 /* Info.plist */); path = App; sourceTree = SOURCE_ROOT; };
+		A30000000000000000000004 /* Products */ = {isa = PBXGroup; children = (A20000000000000000000010 /* LLMmonitor.app */); name = Products; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A40000000000000000000001 /* LLMmonitor */ = {isa = PBXNativeTarget; buildConfigurationList = A50000000000000000000002 /* Build configuration list for PBXNativeTarget "LLMmonitor" */; buildPhases = (A60000000000000000000001 /* Sources */, A60000000000000000000002 /* Resources */, A60000000000000000000003 /* Stamp Build Timestamp */); buildRules = (); dependencies = (); name = LLMmonitor; productName = LLMmonitor; productReference = A20000000000000000000010 /* LLMmonitor.app */; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A70000000000000000000001 /* Project object */ = {isa = PBXProject; attributes = { LastSwiftUpdateCheck = 2600; LastUpgradeCheck = 2600; TargetAttributes = { A40000000000000000000001 = { CreatedOnToolsVersion = 26.0; }; }; }; buildConfigurationList = A50000000000000000000001 /* Build configuration list for PBXProject "LLMmonitor" */; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base); mainGroup = A30000000000000000000001; productRefGroup = A30000000000000000000004 /* Products */; projectDirPath = ""; projectRoot = ""; targets = (A40000000000000000000001 /* LLMmonitor */); };
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A60000000000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000008 /* Icon.icns in Resources */); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A60000000000000000000003 /* Stamp Build Timestamp */ = {isa = PBXShellScriptBuildPhase; buildActionMask = 2147483647; files = (); inputFileListPaths = (); inputPaths = (); name = "Stamp Build Timestamp"; outputFileListPaths = (); outputPaths = (); runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/zsh; shellScript = "set -euo pipefail\nplist=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n/usr/libexec/PlistBuddy -c 'Delete :LLMmonitorBuildTimestamp' \"$plist\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Add :LLMmonitorBuildTimestamp string $(date '+%y%m%d-%H%M')\" \"$plist\"\n"; };
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A60000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001 /* LLMmonitorApp.swift in Sources */, A10000000000000000000002 /* ContentView.swift in Sources */, A10000000000000000000003 /* Discovery.swift in Sources */, A10000000000000000000004 /* MachineStore.swift in Sources */, A10000000000000000000005 /* Models.swift in Sources */, A10000000000000000000006 /* AboutWindow.swift in Sources */, A10000000000000000000007 /* WindowFramePersistence.swift in Sources */); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A80000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES; COPY_PHASE_STRIP = NO; DEBUG_INFORMATION_FORMAT = dwarf; ENABLE_STRICT_OBJC_MSGSEND = YES; GCC_C_LANGUAGE_STANDARD = gnu17; GCC_OPTIMIZATION_LEVEL = 0; MACOSX_DEPLOYMENT_TARGET = 14.0; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
+		A80000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; COPY_PHASE_STRIP = YES; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; ENABLE_STRICT_OBJC_MSGSEND = YES; GCC_C_LANGUAGE_STANDARD = gnu17; MACOSX_DEPLOYMENT_TARGET = 14.0; SWIFT_COMPILATION_MODE = wholemodule; }; name = Release; };
+		A80000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = ""; CODE_SIGNING_ALLOWED = NO; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = App/Info.plist; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks"; MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.ricercar.LLMmonitor; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = macosx; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 6.0; }; name = Debug; };
+		A80000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = ""; CODE_SIGNING_ALLOWED = NO; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = App/Info.plist; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks"; MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.ricercar.LLMmonitor; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = macosx; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 6.0; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A50000000000000000000001 /* Build configuration list for PBXProject "LLMmonitor" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000001 /* Debug */, A80000000000000000000002 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A50000000000000000000002 /* Build configuration list for PBXNativeTarget "LLMmonitor" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000003 /* Debug */, A80000000000000000000004 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = A70000000000000000000001 /* Project object */;
+}

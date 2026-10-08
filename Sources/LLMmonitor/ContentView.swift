@@ -47,6 +47,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingAddMachine) { AddMachineView(store: store) }
         .task { await store.refreshAll() }
+        .background(WindowFramePersistence().frame(width: 0, height: 0))
     }
 
     private var sortedLibraryMachines: [Machine] {

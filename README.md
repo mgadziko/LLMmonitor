@@ -32,6 +32,8 @@ open dist/LLMmonitor.app
 
 The build script creates a standard application bundle, embeds the icon, stamps the About window with the package timestamp, and writes the result to `dist/LLMmonitor.app`. The project targets macOS 14 or later.
 
+For Xcode development, open `LLMmonitor.xcodeproj` and choose the **LLMmonitor** scheme. Xcode builds the same application target and stamps the About build number during each build.
+
 ## Local data
 
 The machine library is stored at:
