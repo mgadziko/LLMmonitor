@@ -29,6 +29,24 @@ struct Machine: Codable, Identifiable, Hashable, Sendable {
     var statusText: String { isOnline ? "Online" : "Offline" }
     var modelSummary: String { models.isEmpty ? "—" : models.map(\.name).joined(separator: ", ") }
     var lastSeenText: String { lastSeen.map { $0.formatted(.relative(presentation: .named)) } ?? "Never" }
+
+    /// A zero-padded address gives IPv4 addresses true numerical ordering in a table.
+    var ipSortKey: String {
+        let octets = address.split(separator: ".").compactMap { Int($0) }
+        guard octets.count == 4 else { return "~\(address)" }
+        return octets.map { String(format: "%03d", $0) }.joined(separator: ".")
+    }
+
+    static func knownName(for address: String) -> String? {
+        [
+            "192.168.4.57": "GreenLotus",
+            "192.168.4.78": "Hal",
+            "192.168.4.101": "Cheyenne",
+            "192.168.4.150": "BlackLotus",
+            "192.168.4.164": "Organon",
+            "192.168.4.165": "WhiteLotus"
+        ][address]
+    }
 }
 
 extension Machine {

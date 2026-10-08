@@ -66,7 +66,14 @@ final class MachineStore {
 
     private func load() {
         guard let data = try? Data(contentsOf: fileURL), let saved = try? JSONDecoder().decode([Machine].self, from: data) else { return }
-        machines = saved.map { var machine = $0; machine.isOnline = false; return machine }
+        machines = saved.map {
+            var machine = $0
+            if machine.displayName == machine.address, let knownName = Machine.knownName(for: machine.address) {
+                machine.displayName = knownName
+            }
+            machine.isOnline = false
+            return machine
+        }
     }
     private func save() { if let data = try? JSONEncoder.pretty.encode(machines) { try? data.write(to: fileURL, options: .atomic) } }
 }

@@ -45,10 +45,20 @@ actor LLMClient {
     }
 
     private func openAIModels(_ endpoint: URL) async throws -> [LLMModel] {
-        struct Response: Decodable { let data: [Item] }
-        struct Item: Decodable { let id: String }
-        let response = try JSONDecoder().decode(Response.self, from: try await data(from: endpoint.appending(path: "v1/models")))
-        return response.data.map { LLMModel(name: $0.id) }.sorted { $0.name < $1.name }
+        let responseData = try await data(from: endpoint.appending(path: "v1/models"))
+        return try Self.decodeOpenAICompatibleModels(from: responseData)
+    }
+
+    /// Supports the standard OpenAI `data` shape and the `models` shape used by llama-server.
+    nonisolated static func decodeOpenAICompatibleModels(from data: Data) throws -> [LLMModel] {
+        struct Response: Decodable { let data: [Item]?; let models: [Item]? }
+        struct Item: Decodable { let id: String?; let name: String?; let model: String? }
+        let response = try JSONDecoder().decode(Response.self, from: data)
+        let items = response.data ?? response.models ?? []
+        return items.compactMap { item in
+            guard let name = item.id ?? item.name ?? item.model else { return nil }
+            return LLMModel(name: name)
+        }.sorted { $0.name < $1.name }
     }
 
     private func lmStudioModels(_ endpoint: URL) async throws -> [LLMModel] {
@@ -80,7 +90,7 @@ actor LANScanner {
                     for kind in [ServerKind.ollama, .openAICompatible, .lmStudio] {
                         let machine = Machine(displayName: address, address: address, port: port, serverKind: kind)
                         if case .success(let models) = await self.client.poll(machine) {
-                            return Machine(displayName: address, address: address, port: port, serverKind: kind, models: models, isOnline: true, lastSeen: .now)
+                            return Machine(displayName: Machine.knownName(for: address) ?? address, address: address, port: port, serverKind: kind, models: models, isOnline: true, lastSeen: .now)
                         }
                     }
                     return nil

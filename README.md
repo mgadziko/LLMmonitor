@@ -19,7 +19,7 @@ Use **Scan LAN** to probe the active IPv4 `/24` network on ports 11434, 11435, 1
 open LLMmonitor.app
 ```
 
-This creates `LLMmonitor.app`, a standard application bundle with a Dock icon. Open the package in Xcode for normal macOS development. The package targets macOS 14 or later.
+This creates `dist/LLMmonitor.app`, a standard application bundle with a Dock icon. Open the package in Xcode for normal macOS development. The package targets macOS 14 or later.
 
 ## Data
 

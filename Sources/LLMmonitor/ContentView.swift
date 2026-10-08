@@ -4,20 +4,26 @@ struct ContentView: View {
     @Bindable var store: MachineStore
     @State private var selection: Machine.ID?
     @State private var showingAddMachine = false
+    @State private var librarySortOrder = [KeyPathComparator(\Machine.ipSortKey)]
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $selection) {
-                Section("Library") {
-                    ForEach(store.machines) { machine in
-                        Label(machine.displayName, systemImage: machine.isOnline ? "desktopcomputer.and.macbook" : "desktopcomputer")
-                            .foregroundStyle(machine.isOnline ? .primary : .secondary)
-                            .tag(machine.id)
-                    }
-                    .onDelete(perform: store.remove)
+            Table(sortedLibraryMachines, selection: $selection, sortOrder: $librarySortOrder) {
+                TableColumn("Machine", value: \.displayName) { machine in
+                    Label(machine.displayName, systemImage: machine.isOnline ? "desktopcomputer.and.macbook" : "desktopcomputer")
+                        .foregroundStyle(machine.isOnline ? .primary : .secondary)
                 }
+                .width(min: 130, ideal: 165)
+                TableColumn("IP Address", value: \.ipSortKey) { machine in
+                    Text(machine.address).monospacedDigit().foregroundStyle(.secondary)
+                }
+                .width(min: 120, ideal: 135)
             }
-            .navigationTitle("LLM Monitor")
+            .contextMenu(forSelectionType: Machine.ID.self) { ids in
+                Button("Refresh") { Task { for id in ids { await store.refresh(id: id) } } }
+                Button("Remove", role: .destructive) { store.remove(ids: ids) }
+            }
+            .navigationTitle("Library")
             .toolbar {
                 ToolbarItem { Button(action: { showingAddMachine = true }) { Label("Add Machine", systemImage: "plus") } }
             }
@@ -41,6 +47,10 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingAddMachine) { AddMachineView(store: store) }
         .task { await store.refreshAll() }
+    }
+
+    private var sortedLibraryMachines: [Machine] {
+        store.machines.sorted(using: librarySortOrder)
     }
 
     private var summary: some View {
@@ -83,7 +93,7 @@ struct AddMachineView: View {
         .frame(width: 390)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-            ToolbarItem(placement: .confirmationAction) { Button("Add") { store.add(Machine(displayName: name.isEmpty ? address : name, address: address, port: port, serverKind: kind)); dismiss() }.disabled(address.isEmpty) }
+            ToolbarItem(placement: .confirmationAction) { Button("Add") { store.add(Machine(displayName: name.isEmpty ? (Machine.knownName(for: address) ?? address) : name, address: address, port: port, serverKind: kind)); dismiss() }.disabled(address.isEmpty) }
         }
     }
 }
