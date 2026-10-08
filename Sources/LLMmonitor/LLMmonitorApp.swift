@@ -9,7 +9,7 @@ struct LLMmonitorApp: App {
             ContentView(store: store)
                 .frame(minWidth: 1_020, minHeight: 620)
         }
-        .windowResizability(.contentMinSize)
+        .windowResizability(.automatic)
         Settings {
             SettingsView(store: store)
         }

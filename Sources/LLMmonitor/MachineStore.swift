@@ -5,7 +5,8 @@ import Observation
 final class MachineStore {
     private(set) var machines: [Machine] = []
     var isRefreshing = false
-    var scanPorts = [11434, 1234, 8080]
+    /// Includes the fleet's dedicated OpenAI-compatible service port (11435).
+    var scanPorts = [11434, 11435, 1234, 8080]
     private let client = LLMClient()
     private let scanner = LANScanner()
     private let fileURL: URL
