@@ -10,6 +10,15 @@ struct LLMmonitorApp: App {
                 .frame(minWidth: 1_020, minHeight: 620)
         }
         .windowResizability(.automatic)
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About LLMmonitor") { AboutWindowController.shared.show() }
+            }
+            CommandGroup(replacing: .saveItem) {
+                Button("Save…") { store.exportCurrentTable() }
+                    .keyboardShortcut("s", modifiers: .command)
+            }
+        }
         Settings {
             SettingsView(store: store)
         }

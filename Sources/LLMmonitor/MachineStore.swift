@@ -1,5 +1,7 @@
 import Foundation
 import Observation
+import AppKit
+import UniformTypeIdentifiers
 
 @MainActor @Observable
 final class MachineStore {
@@ -62,6 +64,69 @@ final class MachineStore {
             } else { machines.append(machine) }
         }
         save()
+    }
+
+    func exportCurrentTable() {
+        let panel = NSSavePanel()
+        let formatPicker = NSPopUpButton(frame: .zero, pullsDown: false)
+        formatPicker.addItems(withTitles: ["Comma-separated values (.csv)", "Plain text (.txt)"])
+        formatPicker.selectItem(at: 0)
+
+        let accessory = NSStackView(views: [NSTextField(labelWithString: "Format:"), formatPicker])
+        accessory.orientation = .horizontal
+        accessory.spacing = 8
+        panel.accessoryView = accessory
+        panel.nameFieldStringValue = "LLMmonitor-Machines.csv"
+        panel.allowedContentTypes = [.commaSeparatedText, .plainText]
+        panel.canSelectHiddenExtension = true
+
+        guard panel.runModal() == .OK, let selectedURL = panel.url else { return }
+        let format: ExportFormat = formatPicker.indexOfSelectedItem == 1 ? .text : .csv
+        let url = selectedURL.pathExtension.isEmpty ? selectedURL.appendingPathExtension(format.fileExtension) : selectedURL
+
+        do {
+            try exportData(format: format).write(to: url, options: .atomic)
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.messageText = "Couldn’t Save LLMmonitor Export"
+            alert.runModal()
+        }
+    }
+
+    private enum ExportFormat { case csv, text
+        var fileExtension: String { self == .csv ? "csv" : "txt" }
+    }
+
+    private func exportData(format: ExportFormat) -> Data {
+        let text: String
+        switch format {
+        case .csv:
+            let header = ["Machine", "Status", "Server", "Address", "Installed Models", "Last Seen", "Last Error"]
+            let rows = machines.map { machine in
+                [machine.displayName, machine.statusText, machine.serverKind.rawValue, "\(machine.address):\(machine.port)", machine.modelSummary, machine.lastSeenText, machine.lastError ?? ""]
+                    .map(Self.csvField)
+                    .joined(separator: ",")
+            }
+            text = ([header.map(Self.csvField).joined(separator: ",")] + rows).joined(separator: "\n") + "\n"
+        case .text:
+            let date = Date().formatted(date: .abbreviated, time: .standard)
+            let rows = machines.map { machine in
+                """
+                \(machine.displayName)
+                  Status: \(machine.statusText)
+                  Server: \(machine.serverKind.rawValue)
+                  Address: \(machine.address):\(machine.port)
+                  Installed Models: \(machine.modelSummary)
+                  Last Seen: \(machine.lastSeenText)
+                """ + (machine.lastError.map { "\n  Last Error: \($0)" } ?? "")
+            }
+            text = "LLMmonitor Machine Library\nExported: \(date)\n\n" + rows.joined(separator: "\n\n") + "\n"
+        }
+        return Data(text.utf8)
+    }
+
+    private static func csvField(_ value: String) -> String {
+        "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
     }
 
     private func load() {
