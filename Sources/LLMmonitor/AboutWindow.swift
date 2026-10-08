@@ -25,7 +25,13 @@ final class AboutWindowController {
         panel.isMovableByWindowBackground = true
         panel.isReleasedWhenClosed = false
         panel.center()
-        panel.contentView = NSHostingView(rootView: AboutBoxView())
+        panel.contentView = NSHostingView(
+            rootView: AboutBoxView()
+                .frame(width: 552, height: 330)
+        )
+        panel.setContentSize(NSSize(width: 552, height: 330))
+        panel.minSize = NSSize(width: 552, height: 330)
+        panel.maxSize = NSSize(width: 552, height: 330)
         self.panel = panel
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
