@@ -21,6 +21,8 @@ struct Machine: Codable, Identifiable, Hashable, Sendable {
     var port: Int
     var serverKind: ServerKind
     var models: [LLMModel] = []
+    /// A GPU summary obtained by LLMmonitor from a machine's own hardware report.
+    var gpuSummary: String?
     var isOnline = false
     var lastSeen: Date?
     var lastError: String?
@@ -28,6 +30,7 @@ struct Machine: Codable, Identifiable, Hashable, Sendable {
     var endpoint: URL? { URL(string: "http://\(address):\(port)") }
     var statusText: String { isOnline ? "Online" : "Offline" }
     var modelSummary: String { models.isEmpty ? "—" : models.map(\.name).joined(separator: ", ") }
+    var gpuDisplay: String { gpuSummary ?? "Unknown" }
     var lastSeenText: String { lastSeen.map { $0.formatted(.relative(presentation: .named)) } ?? "Never" }
 
     /// A zero-padded address gives IPv4 addresses true numerical ordering in a table.
@@ -47,6 +50,7 @@ struct Machine: Codable, Identifiable, Hashable, Sendable {
             "192.168.4.165": "WhiteLotus"
         ][address]
     }
+
 }
 
 extension Machine {

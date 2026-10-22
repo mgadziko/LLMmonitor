@@ -35,6 +35,7 @@ struct ContentView: View {
                     TableColumn("Status") { StatusBadge(machine: $0) }.width(min: 76, ideal: 90)
                     TableColumn("Server") { Text($0.serverKind.rawValue) }.width(min: 120, ideal: 150)
                     TableColumn("Address") { Text("\($0.address):\($0.port)").textSelection(.enabled) }.width(min: 150, ideal: 170)
+                    TableColumn("GPUs") { Text($0.gpuDisplay).lineLimit(1) }.width(min: 150, ideal: 190)
                     TableColumn("Installed Models") { Text($0.modelSummary).lineLimit(1) }.width(min: 260, ideal: 420)
                     TableColumn("Last Seen") { Text($0.lastSeenText) }.width(min: 100, ideal: 130)
                 }

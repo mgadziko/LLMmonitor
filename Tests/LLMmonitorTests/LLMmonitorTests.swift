@@ -15,3 +15,18 @@ import Testing
     """.utf8)
     #expect(try LLMClient.decodeOpenAICompatibleModels(from: response).map(\.name) == ["greenlotus-qwen"])
 }
+
+@Test func summarizesNVIDIASMIOutput() {
+    let output = Data("""
+    Tesla P100-PCIE-16GB, 16384 MiB
+    Tesla P100-PCIE-16GB, 16384 MiB
+    """.utf8)
+    #expect(SSHHardwareProbe.nvidiaSummary(data: output) == "2× Tesla P100-PCIE-16GB")
+}
+
+@Test func summarizesSystemProfilerGPUOutput() {
+    let output = Data("""
+    {"SPDisplaysDataType":[{"_name":"Apple M4 Max","sppci_cores":"40","sppci_model":"Apple M4 Max","spdisplays_ndrvs":[{"_name":"Color LCD"}]}]}
+    """.utf8)
+    #expect(SSHHardwareProbe.macOSSummary(data: output) == "Apple M4 Max — 40-core GPU")
+}
