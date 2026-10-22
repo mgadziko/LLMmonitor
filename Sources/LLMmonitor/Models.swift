@@ -23,6 +23,8 @@ struct Machine: Codable, Identifiable, Hashable, Sendable {
     var models: [LLMModel] = []
     /// A GPU summary obtained by LLMmonitor from a machine's own hardware report.
     var gpuSummary: String?
+    /// The last successful read-only hardware probe, retained for offline machines.
+    var hardwareProfile: HardwareProfile?
     var isOnline = false
     var lastSeen: Date?
     var lastError: String?
@@ -51,6 +53,48 @@ struct Machine: Codable, Identifiable, Hashable, Sendable {
         ][address]
     }
 
+}
+
+struct HardwareProfile: Codable, Hashable, Sendable {
+    /// The command that supplied this profile, not an inferred machine type.
+    var source: String
+    var observedAt: Date
+    var systemModel: String?
+    var chip: String?
+    var memory: String?
+    var driverVersion: String?
+    var gpus: [GPUDetails]
+
+    var gpuSummary: String {
+        var models: [(name: String, count: Int)] = []
+        for gpu in gpus {
+            if let index = models.firstIndex(where: { $0.name == gpu.name }) {
+                models[index].count += 1
+            } else {
+                models.append((gpu.name, 1))
+            }
+        }
+        return models.map { model in
+            let suffix = gpus.first(where: { $0.name == model.name })?.coreCount.map { " — \($0)-core GPU" } ?? ""
+            return model.count == 1 ? "\(model.name)\(suffix)" : "\(model.count)× \(model.name)"
+        }.joined(separator: " + ")
+    }
+}
+
+struct GPUDetails: Codable, Hashable, Sendable, Identifiable {
+    var id: String { "\(name)-\(index)" }
+    var index: Int
+    var name: String
+    var totalMemory: String?
+    var usedMemory: String?
+    var temperature: String?
+    var utilization: String?
+    var power: String?
+    var coreCount: String?
+
+    var hasLiveTelemetry: Bool {
+        temperature != nil || utilization != nil || usedMemory != nil || power != nil
+    }
 }
 
 extension Machine {

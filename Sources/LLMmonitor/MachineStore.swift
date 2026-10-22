@@ -48,8 +48,9 @@ final class MachineStore {
             machines[index].isOnline = false
             machines[index].lastError = error.message
         }
-        if let gpuSummary = await sshHardwareProbe.gpuSummary(for: original) {
-            machines[index].gpuSummary = gpuSummary
+        if let hardwareProfile = await sshHardwareProbe.hardwareProfile(for: original) {
+            machines[index].hardwareProfile = hardwareProfile
+            machines[index].gpuSummary = hardwareProfile.gpuSummary
         }
         save()
     }
@@ -161,10 +162,10 @@ final class MachineStore {
 /// SSH host aliases select the appropriate key from the user's SSH configuration.
 /// It never prompts for credentials or changes remote state.
 actor SSHHardwareProbe {
-    func gpuSummary(for machine: Machine) async -> String? {
+    func hardwareProfile(for machine: Machine) async -> HardwareProfile? {
         guard let host = Self.sshHost(for: machine.address) else { return nil }
         return await Task.detached(priority: .utility) {
-            Self.readGPU(host: host)
+            Self.readHardware(host: host)
         }.value
     }
 
@@ -181,21 +182,21 @@ actor SSHHardwareProbe {
 
     /// Uses NVIDIA's native utility when available, then macOS System Profiler.
     /// Both commands are read-only and run through the same SSH host alias.
-    nonisolated private static func readGPU(host: String) -> String? {
+    nonisolated private static func readHardware(host: String) -> HardwareProfile? {
         if let nvidiaData = runSSH(
             host: host,
-            command: "nvidia-smi --query-gpu=name,memory.total --format=csv,noheader"
-        ), let summary = nvidiaSummary(data: nvidiaData) {
-            return summary
+            command: "nvidia-smi --query-gpu=name,memory.total,driver_version,temperature.gpu,utilization.gpu,memory.used,power.draw --format=csv,noheader,nounits"
+        ), let profile = nvidiaProfile(data: nvidiaData) {
+            return profile
         }
 
         guard let systemProfilerData = runSSH(
             host: host,
-            command: "system_profiler SPDisplaysDataType -json"
+            command: "system_profiler SPHardwareDataType SPDisplaysDataType -json"
         ) else {
             return nil
         }
-        return macOSSummary(data: systemProfilerData)
+        return macOSProfile(data: systemProfilerData)
     }
 
     nonisolated private static func runSSH(host: String, command: String) -> Data? {
@@ -243,44 +244,101 @@ actor SSHHardwareProbe {
         return orderedModels.map { "\($0.count)× \($0.name)" }.joined(separator: " + ")
     }
 
+    nonisolated static func nvidiaProfile(data: Data) -> HardwareProfile? {
+        let rows = String(decoding: data, as: UTF8.self)
+            .split(whereSeparator: \.isNewline)
+            .enumerated()
+            .compactMap { index, line -> GPUDetails? in
+                let values = line.split(separator: ",", omittingEmptySubsequences: false)
+                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                guard values.count >= 7, !values[0].isEmpty else { return nil }
+                return GPUDetails(
+                    index: index,
+                    name: values[0],
+                    totalMemory: unitValue(values[1], unit: "MiB"),
+                    usedMemory: unitValue(values[5], unit: "MiB"),
+                    temperature: unitValue(values[3], unit: "°C"),
+                    utilization: unitValue(values[4], unit: "%"),
+                    power: unitValue(values[6], unit: "W"),
+                    coreCount: nil
+                )
+            }
+        guard !rows.isEmpty else { return nil }
+        let driver = String(decoding: data, as: UTF8.self)
+            .split(whereSeparator: \.isNewline)
+            .first?
+            .split(separator: ",", omittingEmptySubsequences: false)
+            .dropFirst(2)
+            .first
+            .map { String($0).trimmingCharacters(in: .whitespaces) }
+        return HardwareProfile(
+            source: "nvidia-smi",
+            observedAt: .now,
+            systemModel: nil,
+            chip: nil,
+            memory: nil,
+            driverVersion: driver?.isEmpty == false ? driver : nil,
+            gpus: rows
+        )
+    }
+
     /// Extracts the primary GPU reported by `system_profiler SPDisplaysDataType -json`.
     nonisolated static func macOSSummary(data: Data) -> String? {
+        macOSProfile(data: data)?.gpuSummary
+    }
+
+    nonisolated static func macOSProfile(data: Data) -> HardwareProfile? {
         guard
             let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             let displays = root["SPDisplaysDataType"] as? [[String: Any]]
         else { return nil }
 
+        var gpus: [GPUDetails] = []
         for display in displays {
             // Apple silicon reports the GPU attributes on this top-level object.
             // Its nested `spdisplays_ndrvs` objects describe attached displays.
-            if let summary = macOSGPUSummary(from: display, allowsNameFallback: true) {
-                return summary
+            if let gpu = macOSGPUDetails(from: display, allowsNameFallback: true, index: gpus.count) {
+                gpus.append(gpu)
+                continue
             }
             guard let drivers = display["spdisplays_ndrvs"] as? [[String: Any]] else { continue }
             for driver in drivers {
                 // Some external GPUs are represented by a nested PCI driver.
                 // Do not use `_name` here: it can be a display name such as “Color LCD”.
-                if let summary = macOSGPUSummary(from: driver, allowsNameFallback: false) {
-                    return summary
+                if let gpu = macOSGPUDetails(from: driver, allowsNameFallback: false, index: gpus.count) {
+                    gpus.append(gpu)
                 }
             }
         }
-        return nil
+        guard !gpus.isEmpty else { return nil }
+        let overview = (root["SPHardwareDataType"] as? [[String: Any]])?.first
+        return HardwareProfile(
+            source: "system_profiler",
+            observedAt: .now,
+            systemModel: overview?["machine_name"] as? String,
+            chip: overview?["chip_type"] as? String,
+            memory: overview?["physical_memory"] as? String,
+            driverVersion: nil,
+            gpus: gpus
+        )
     }
 
-    nonisolated private static func macOSGPUSummary(
+    nonisolated private static func macOSGPUDetails(
         from properties: [String: Any],
-        allowsNameFallback: Bool
-    ) -> String? {
+        allowsNameFallback: Bool,
+        index: Int
+    ) -> GPUDetails? {
         let model = properties["sppci_model"] as? String
             ?? (allowsNameFallback ? properties["_name"] as? String : nil)
         guard let model, !model.isEmpty else { return nil }
 
         let cores = (properties["sppci_cores"] ?? properties["spdisplays_cores"]) as? String
-        if let cores, !cores.isEmpty {
-            return "\(model) — \(cores)-core GPU"
-        }
-        return model
+        return GPUDetails(index: index, name: model, totalMemory: nil, usedMemory: nil, temperature: nil, utilization: nil, power: nil, coreCount: cores)
+    }
+
+    nonisolated private static func unitValue(_ value: String, unit: String) -> String? {
+        guard !value.isEmpty, value != "[N/A]", value != "N/A" else { return nil }
+        return "\(value) \(unit)"
     }
 }
 

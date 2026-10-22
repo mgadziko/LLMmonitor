@@ -17,13 +17,13 @@ The app answers the practical questions quickly: which machines are reachable, w
 
 Known fleet addresses are given their machine names automatically. Other hosts can be added by hand, with a name, address, port, and server type.
 
-For SSH-configured machines, the app makes a read-only `nvidia-smi --query-gpu=name,memory.total --format=csv,noheader` request while refreshing. If that produces no GPU inventory, it falls back over the same authenticated connection to `system_profiler SPDisplaysDataType -json` for macOS machines. The GPU column is populated only when either live hardware query succeeds. SSH aliases use the corresponding key configured in the user’s SSH configuration; the app never prompts for or stores a password or key.
+For SSH-configured machines, the app makes a read-only `nvidia-smi` request while refreshing. It records GPU model, VRAM capacity and use, driver version, temperature, utilization, and power when the NVIDIA utility supplies them. If that produces no GPU inventory, it falls back over the same authenticated connection to `system_profiler SPHardwareDataType SPDisplaysDataType -json` for macOS machines. SSH aliases use the corresponding key configured in the user’s SSH configuration; the app never prompts for or stores a password or key. A failed probe leaves hardware fields unknown until the app obtains data from that machine.
 
 ## Library and export
 
-The left Library table can be sorted by **Machine** or **IP Address**. The main table provides a fleet-wide view of status, server type, endpoint, reported models, and last-seen time.
+The left Library table can be sorted by **Machine** or **IP Address**. Selecting a machine opens its detail inspector with connection information, installed models, and the last successful hardware snapshot. NVIDIA telemetry is sampled on refresh and timestamped; it is not a continuous stream. A saved snapshot remains visible if the machine later goes offline. Use **All Machines** in the inspector to return to the fleet-wide table.
 
-Choose **File → Save…** to export the current machine table as either CSV or a readable plain-text report. The app does not export credentials because it does not collect them.
+Choose **File → Save…** to export the fleet-wide machine table as either CSV or a readable plain-text report. The app does not export credentials because it does not collect them.
 
 ## Build and run
 
@@ -43,7 +43,6 @@ The machine library is stored at:
 ```text
 ~/Library/Application Support/LLMmonitor/machines.json
 ```
-
 
 ## Bundle identifier
 

@@ -30,3 +30,16 @@ import Testing
     """.utf8)
     #expect(SSHHardwareProbe.macOSSummary(data: output) == "Apple M4 Max — 40-core GPU")
 }
+
+@Test func readsLiveNVIDIATelemetry() {
+    let output = Data("""
+    Tesla P100-PCIE-16GB, 16384, 550.54, 62, 48, 8192, 145.20
+    """.utf8)
+    let profile = SSHHardwareProbe.nvidiaProfile(data: output)
+    #expect(profile?.gpuSummary == "Tesla P100-PCIE-16GB")
+    #expect(profile?.driverVersion == "550.54")
+    #expect(profile?.gpus.first?.temperature == "62 °C")
+    #expect(profile?.gpus.first?.utilization == "48 %")
+    #expect(profile?.gpus.first?.usedMemory == "8192 MiB")
+    #expect(profile?.gpus.first?.power == "145.20 W")
+}
