@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var selection: Machine.ID?
     @State private var showingAddMachine = false
     @State private var librarySortOrder = [KeyPathComparator(\Machine.ipSortKey)]
+    @State private var fleetSortOrder: [KeyPathComparator<Machine>] = []
     @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
@@ -43,7 +44,14 @@ struct ContentView: View {
             .navigationTitle(selectedMachine?.displayName ?? "Machines")
         }
         .sheet(isPresented: $showingAddMachine) { AddMachineView(store: store) }
-        .task { await store.refreshAll() }
+        .task {
+            await store.refreshAll()
+            while !Task.isCancelled {
+                do { try await Task.sleep(for: .seconds(30)) }
+                catch { break }
+                await store.refreshAll(includeHardware: false)
+            }
+        }
         .background(WindowFramePersistence().frame(width: 0, height: 0))
     }
 
@@ -56,17 +64,21 @@ struct ContentView: View {
         return store.machines.first { $0.id == selection }
     }
 
+    private var sortedFleetMachines: [Machine] {
+        fleetSortOrder.isEmpty ? store.machines : store.machines.sorted(using: fleetSortOrder)
+    }
+
     private var allMachinesView: some View {
         VStack(spacing: 0) {
             summary
-            Table(store.machines, selection: $selection) {
-                TableColumn("Machine") { Text($0.displayName) }
-                TableColumn("Status") { StatusBadge(machine: $0) }.width(min: 76, ideal: 90)
-                TableColumn("Server") { Text($0.serverKind.rawValue) }.width(min: 120, ideal: 150)
-                TableColumn("Address") { Text("\($0.address):\($0.port)").textSelection(.enabled) }.width(min: 150, ideal: 170)
-                TableColumn("GPUs") { Text($0.gpuDisplay).lineLimit(1) }.width(min: 150, ideal: 190)
-                TableColumn("Installed Models") { Text($0.modelSummary).lineLimit(1) }.width(min: 260, ideal: 420)
-                TableColumn("Last Seen") { Text($0.lastSeenText) }.width(min: 100, ideal: 130)
+            Table(sortedFleetMachines, selection: $selection, sortOrder: $fleetSortOrder) {
+                TableColumn("Machine", value: \.displayName) { Text($0.displayName) }
+                TableColumn("Status", value: \.statusText) { StatusBadge(machine: $0) }.width(min: 76, ideal: 90)
+                TableColumn("Server", value: \.serverKind.rawValue) { Text($0.serverKind.rawValue) }.width(min: 120, ideal: 150)
+                TableColumn("Address", value: \.ipSortKey) { Text("\($0.address):\($0.port)").textSelection(.enabled) }.width(min: 150, ideal: 170)
+                TableColumn("GPUs", value: \.gpuDisplay) { Text($0.gpuDisplay).lineLimit(1) }.width(min: 150, ideal: 190)
+                TableColumn("Installed Models", value: \.modelSummary) { Text($0.modelSummary).lineLimit(1) }.width(min: 260, ideal: 420)
+                TableColumn("Last Seen", value: \.lastSeenSortKey) { Text($0.lastSeenText) }.width(min: 100, ideal: 130)
             }
             .contextMenu(forSelectionType: Machine.ID.self) { ids in
                 Button("Refresh") { Task { for id in ids { await store.refresh(id: id) } } }
@@ -141,23 +153,28 @@ private struct MachineInspector: View {
                                     if let driverVersion = profile.driverVersion { InspectorRow(label: "NVIDIA driver", value: driverVersion) }
                                 }
                             }
-                            ForEach(profile.gpus) { gpu in
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text(gpu.name).font(.headline)
-                                    if gpu.hasLiveTelemetry {
-                                        Text("Live GPU telemetry").font(.caption).foregroundStyle(.secondary)
-                                    }
-                                    Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 8) {
-                                        if let totalMemory = gpu.totalMemory { InspectorRow(label: "VRAM", value: totalMemory) }
-                                        if let usedMemory = gpu.usedMemory { InspectorRow(label: "VRAM in use", value: usedMemory) }
-                                        if let temperature = gpu.temperature { InspectorRow(label: "Temperature", value: temperature) }
-                                        if let utilization = gpu.utilization { InspectorRow(label: "Utilization", value: utilization) }
-                                        if let power = gpu.power { InspectorRow(label: "Power", value: power) }
-                                        if let coreCount = gpu.coreCount { InspectorRow(label: "GPU cores", value: coreCount) }
+                            ScrollView(.horizontal) {
+                                HStack(alignment: .top, spacing: 12) {
+                                    ForEach(profile.gpus) { gpu in
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text(gpu.name).font(.headline)
+                                            if gpu.hasLiveTelemetry {
+                                                Text("Live GPU telemetry").font(.caption).foregroundStyle(.secondary)
+                                            }
+                                            Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 8) {
+                                                if let totalMemory = gpu.totalMemory { InspectorRow(label: "VRAM", value: totalMemory) }
+                                                if let usedMemory = gpu.usedMemory { InspectorRow(label: "VRAM in use", value: usedMemory) }
+                                                if let temperature = gpu.temperature { InspectorRow(label: "Temperature", value: temperature) }
+                                                if let utilization = gpu.utilization { InspectorRow(label: "Utilization", value: utilization) }
+                                                if let power = gpu.power { InspectorRow(label: "Power", value: power) }
+                                                if let coreCount = gpu.coreCount { InspectorRow(label: "GPU cores", value: coreCount) }
+                                            }
+                                        }
+                                        .frame(width: 170, alignment: .leading)
+                                        .padding(12)
+                                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
                                     }
                                 }
-                                .padding(12)
-                                .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -173,7 +190,15 @@ private struct MachineInspector: View {
                     } else {
                         VStack(alignment: .leading, spacing: 8) {
                             ForEach(machine.models) { model in
-                                Text(model.name).textSelection(.enabled)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(model.name).textSelection(.enabled)
+                                    if let alias = model.apiAlias {
+                                        Text("API alias: \(alias)")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .textSelection(.enabled)
+                                    }
+                                }
                             }
                         }
                     }

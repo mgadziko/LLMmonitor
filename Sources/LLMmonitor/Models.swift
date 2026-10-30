@@ -2,7 +2,9 @@ import Foundation
 
 struct LLMModel: Codable, Identifiable, Hashable, Sendable {
     var id: String { name }
-    let name: String
+    var name: String
+    /// The API identifier when it is an alias for a more specific loaded model.
+    var apiAlias: String?
     var sizeBytes: Int64?
     var modifiedAt: Date?
     var contextLength: Int?
@@ -34,6 +36,7 @@ struct Machine: Codable, Identifiable, Hashable, Sendable {
     var modelSummary: String { models.isEmpty ? "—" : models.map(\.name).joined(separator: ", ") }
     var gpuDisplay: String { gpuSummary ?? "Unknown" }
     var lastSeenText: String { lastSeen.map { $0.formatted(.relative(presentation: .named)) } ?? "Never" }
+    var lastSeenSortKey: String { lastSeen.map { String(format: "%020.3f", $0.timeIntervalSince1970) } ?? "" }
 
     /// A zero-padded address gives IPv4 addresses true numerical ordering in a table.
     var ipSortKey: String {

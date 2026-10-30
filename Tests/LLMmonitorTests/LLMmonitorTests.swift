@@ -16,6 +16,28 @@ import Testing
     #expect(try LLMClient.decodeOpenAICompatibleModels(from: response).map(\.name) == ["greenlotus-qwen"])
 }
 
+@Test func resolvesLlamaServerAliasToLoadedGGUFName() throws {
+    let response = Data("""
+    {"data":[{"id":"greenlotus-qwen"}]}
+    """.utf8)
+    let props = Data("""
+    {"model_alias":"greenlotus-qwen","model_path":"/models/Qwen2.5-72B-Instruct-Q4_K_M/qwen2.5-72b-instruct-q4_k_m-00001-of-00012.gguf"}
+    """.utf8)
+    let models = try LLMClient.decodeOpenAICompatibleModels(from: response)
+    let identified = LLMClient.modelsWithLoadedGGUFNames(models, propsData: props)
+    #expect(identified.map(\.name) == ["qwen2.5-72b-instruct-q4_k_m"])
+    #expect(identified.first?.apiAlias == "greenlotus-qwen")
+}
+
+@Test func leavesOtherModelsAloneWhenPropsDoNotMatch() {
+    let models = [LLMModel(name: "unrelated-model")]
+    let props = Data("""
+    {"model_alias":"greenlotus-qwen","model_path":"/models/qwen2.5-72b-instruct-q4_k_m.gguf"}
+    """.utf8)
+    #expect(LLMClient.modelsWithLoadedGGUFNames(models, propsData: props) == models)
+    #expect(LLMClient.modelsWithLoadedGGUFNames(models, propsData: Data("{}".utf8)) == models)
+}
+
 @Test func summarizesNVIDIASMIOutput() {
     let output = Data("""
     Tesla P100-PCIE-16GB, 16384 MiB

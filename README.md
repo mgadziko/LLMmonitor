@@ -10,9 +10,11 @@ The app answers the practical questions quickly: which machines are reachable, w
 
 **Inventory polling** uses read-only HTTP endpoints:
 
+Known machines are checked when the window opens and every 30 seconds thereafter while the window remains open. A failed endpoint check marks a machine offline without discarding its last-known models or hardware profile. **Refresh** also checks hardware over SSH; **Scan LAN** discovers new services and then rechecks remembered machines, including those absent from the scan. Automatic checks do not run SSH hardware probes.
+
 - Ollama: `GET /api/tags`
 - OpenAI-compatible servers: `GET /v1/models`
-- llama-server compatibility: accepts both the normal `data` response and its `models` response
+- llama-server compatibility: accepts both the normal `data` response and its `models` response; when its read-only `GET /props` endpoint identifies a loaded GGUF path, the library shows that file's model name rather than the API alias (the alias remains visible in the inspector). Sharded filenames are shown without the `-00001-of-00012` suffix. Servers without `/props` retain their reported model IDs.
 - LM Studio: `GET /api/v0/models`
 
 Known fleet addresses are given their machine names automatically. Other hosts can be added by hand, with a name, address, port, and server type.
@@ -21,7 +23,7 @@ For SSH-configured machines, the app makes a read-only `nvidia-smi` request whil
 
 ## Library and export
 
-The left Library table can be sorted by **Machine** or **IP Address**. Selecting a machine opens its detail inspector with connection information, installed models, and the last successful hardware snapshot. NVIDIA telemetry is sampled on refresh and timestamped; it is not a continuous stream. A saved snapshot remains visible if the machine later goes offline. Use **All Machines** in the inspector to return to the fleet-wide table.
+The left Library table can be sorted by **Machine** or **IP Address**. Selecting a machine opens its detail inspector with connection information, installed models, and the last successful hardware snapshot. NVIDIA telemetry is sampled on refresh and timestamped; it is not a continuous stream. A saved snapshot remains visible if the machine later goes offline. Use **All Machines** in the inspector to return to the fleet-wide table. Click a fleet-table heading to sort by that column; click it again to reverse the order. Addresses sort by their numeric IP values, and Last Seen sorts by observation time.
 
 Choose **File → Save…** to export the fleet-wide machine table as either CSV or a readable plain-text report. The app does not export credentials because it does not collect them.
 

@@ -26,16 +26,22 @@ final class MachineStore {
     func remove(at offsets: IndexSet) { machines.remove(atOffsets: offsets); save() }
     func remove(ids: Set<Machine.ID>) { machines.removeAll { ids.contains($0.id) }; save() }
 
-    func refreshAll() async {
+    func refreshAll(includeHardware: Bool = true) async {
+        guard !isRefreshing else { return }
         isRefreshing = true
         defer { isRefreshing = false }
-        for index in machines.indices {
-            await refresh(id: machines[index].id)
-        }
+        await refreshKnownMachines(includeHardware: includeHardware)
         save()
     }
 
-    func refresh(id: UUID) async {
+    private func refreshKnownMachines(includeHardware: Bool) async {
+        for id in machines.map(\.id) {
+            if Task.isCancelled { break }
+            await refresh(id: id, includeHardware: includeHardware)
+        }
+    }
+
+    func refresh(id: UUID, includeHardware: Bool = true) async {
         guard let index = machines.firstIndex(where: { $0.id == id }) else { return }
         let original = machines[index]
         switch await client.poll(original) {
@@ -48,7 +54,7 @@ final class MachineStore {
             machines[index].isOnline = false
             machines[index].lastError = error.message
         }
-        if let hardwareProfile = await sshHardwareProbe.hardwareProfile(for: original) {
+        if includeHardware, let hardwareProfile = await sshHardwareProbe.hardwareProfile(for: original) {
             machines[index].hardwareProfile = hardwareProfile
             machines[index].gpuSummary = hardwareProfile.gpuSummary
         }
@@ -69,6 +75,9 @@ final class MachineStore {
                 machines[index].lastError = nil
             } else { machines.append(machine) }
         }
+        // Discovery only reports responders; recheck remembered endpoints so a
+        // machine that disappeared is not left marked online from an older scan.
+        await refreshKnownMachines(includeHardware: false)
         save()
     }
 

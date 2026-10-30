@@ -46,7 +46,11 @@ actor LLMClient {
 
     private func openAIModels(_ endpoint: URL) async throws -> [LLMModel] {
         let responseData = try await data(from: endpoint.appending(path: "v1/models"))
-        return try Self.decodeOpenAICompatibleModels(from: responseData)
+        let models = try Self.decodeOpenAICompatibleModels(from: responseData)
+        // llama.cpp publishes the API alias in /v1/models but the loaded GGUF
+        // filename in /props. Other OpenAI-compatible servers may omit /props.
+        guard let propsData = try? await data(from: endpoint.appending(path: "props")) else { return models }
+        return Self.modelsWithLoadedGGUFNames(models, propsData: propsData)
     }
 
     /// Supports the standard OpenAI `data` shape and the `models` shape used by llama-server.
@@ -59,6 +63,32 @@ actor LLMClient {
             guard let name = item.id ?? item.name ?? item.model else { return nil }
             return LLMModel(name: name)
         }.sorted { $0.name < $1.name }
+    }
+
+    nonisolated static func modelsWithLoadedGGUFNames(_ models: [LLMModel], propsData: Data) -> [LLMModel] {
+        struct Properties: Decodable {
+            let model_alias: String?
+            let model_path: String?
+        }
+        guard let properties = try? JSONDecoder().decode(Properties.self, from: propsData),
+              let alias = properties.model_alias, !alias.isEmpty,
+              let path = properties.model_path, !path.isEmpty else { return models }
+
+        let filename = URL(fileURLWithPath: path).lastPathComponent
+        guard filename.lowercased().hasSuffix(".gguf") else { return models }
+        var modelName = String(filename.dropLast(5))
+        if let shardSuffix = modelName.range(of: "-[0-9]{5}-of-[0-9]{5}$", options: .regularExpression) {
+            modelName.removeSubrange(shardSuffix)
+        }
+        guard !modelName.isEmpty, modelName != alias else { return models }
+
+        return models.map { model in
+            guard model.name == alias else { return model }
+            var identified = model
+            identified.name = modelName
+            identified.apiAlias = alias
+            return identified
+        }
     }
 
     private func lmStudioModels(_ endpoint: URL) async throws -> [LLMModel] {
